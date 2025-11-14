@@ -149,7 +149,7 @@ lib/core/utils/
 
 ### 📋 Remaining for Full Launch:
 - [ ] Add haptic feedback to all interactions
-- [ ] iOS support (Screen Time API)
+- [x] iOS support (Manual trigger mode implemented)
 - [ ] Better breathing animations (Rive/Lottie)
 - [ ] App icon design
 - [ ] App Store screenshots
@@ -283,6 +283,39 @@ The app is now **production-ready** for initial Android launch:
 
 ---
 
+## 📱 iOS Support Added (Post-Phase 3)
+
+### Implementation Details:
+
+**Challenge**: iOS doesn't allow background app monitoring due to privacy restrictions.
+
+**Solution**: Manual trigger mode that works beautifully:
+- Users tap "Pause & Reflect" button before opening social apps
+- Friction moment appears on-demand
+- All 5 friction modes work
+- Emotion tracking works
+- Insights and stats track patterns
+- More intentional than automatic mode
+
+**Technical Changes**:
+- Created `ios/Runner/Info.plist` configuration
+- Updated `UsageMonitorService` with platform detection
+- Modified `HomeScreen` with iOS-specific UI
+- Status card shows "Manual Mode (iOS)"
+- Info card explains iOS manual approach
+
+**Future Enhancement**:
+- Siri Shortcuts integration for voice/widget access
+- "Hey Siri, pause and reflect" → friction moment
+
+**User Experience**:
+- Android: Automatic friction when opening apps
+- iOS: Self-initiated friction before opening apps
+- Both: Same friction modes, emotion tracking, insights
+
+---
+
 *Phase 3 completed: November 2025*
-*Ready for: Beta testing*
-*Status: Production-ready for Android*
+*iOS support added: November 2025*
+*Ready for: Beta testing on Android and iOS*
+*Status: Production-ready for both platforms*

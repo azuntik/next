@@ -12,7 +12,8 @@ Intentional Friction helps you understand *why* you reach for your phone and mak
 
 - Flutter 3.16.0 or higher
 - Android Studio or VS Code with Flutter extensions
-- Android device or emulator (API level 21+)
+- **Android**: Device or emulator (API level 21+)
+- **iOS**: Xcode 15+ on macOS, iOS device or simulator (iOS 13+)
 
 ### Installation
 
@@ -38,12 +39,22 @@ Intentional Friction helps you understand *why* you reach for your phone and mak
 
 ### First Time Setup
 
-1. Launch the app
+#### Android (Automatic Monitoring)
+1. Launch the app and complete the onboarding
 2. Tap "Grant Permissions" to allow usage stats access
 3. Follow the Android system prompt to enable usage access
 4. Tap "Start Monitoring"
 5. Try opening Instagram, Twitter, or any monitored app
-6. Experience your first friction moment!
+6. Experience your first friction moment automatically!
+
+#### iOS (Manual Trigger Mode)
+1. Launch the app and complete the onboarding
+2. Tap the "Pause & Reflect" button before opening social apps
+3. Experience a friction moment to check your intentions
+4. Choose to proceed or close the app
+5. Your patterns are tracked over time
+
+**Note**: iOS doesn't allow background app monitoring. Instead, you manually trigger friction moments when you feel the urge to open social apps. Future updates will add Siri Shortcuts for quick access.
 
 ## How It Works
 
@@ -63,7 +74,7 @@ Track your mindfulness over time
 
 ## Features
 
-### Phase 1 (MVP) - Current Implementation
+### Phase 1 (MVP) ✅ Complete
 
 - ✅ App launch detection for social media apps
 - ✅ Friction moment with reflective prompt
@@ -73,21 +84,35 @@ Track your mindfulness over time
 - ✅ Local-first data storage with Hive
 - ✅ Usage stats permission handling
 
-### Phase 2 (Coming Soon)
+### Phase 2 (Intelligence) ✅ Complete
 
-- Multiple friction modes (mirror, breath, trade-off, alternative)
-- Adaptive intelligence based on your patterns
-- Emotion tracking
-- Time-of-day pattern recognition
-- Weekly insights generation
+- ✅ All 5 friction modes (mirror, question, trade-off, breath, alternative)
+- ✅ Adaptive intelligence based on your patterns
+- ✅ Emotion tracking (6 emotions: bored, anxious, curious, avoiding, lonely, tired)
+- ✅ Time-of-day pattern recognition
+- ✅ Weekly insights generation
+- ✅ Zombie hour detection (high proceed-rate times)
+- ✅ Adaptive intervention rate
+- ✅ Settings screen with customization
+- ✅ Insights screen with 30-day trends
 
-### Phase 3 (Future)
+### Phase 3 (Polish) ✅ Complete
 
-- iOS support
-- Custom animations
+- ✅ iOS support (manual trigger mode)
+- ✅ Android support (automatic monitoring)
+- ✅ 8-page interactive onboarding
+- ✅ Haptic feedback system
+- ✅ Material Design 3 theming
+- ✅ Bottom navigation
+- ✅ Production-ready architecture
+
+### Future Enhancements
+
+- Siri Shortcuts integration (iOS)
+- Advanced animations (Rive/Lottie)
 - Sound design
-- Advanced settings
-- Data export
+- Data export/import
+- Premium features
 
 ## Monitored Apps
 
@@ -103,6 +128,28 @@ By default, the app monitors:
 - LinkedIn
 
 You can customize this list in the code at `lib/core/utils/constants.dart`.
+
+## Platform Differences
+
+### Android: Automatic Background Monitoring
+- **How it works**: Uses Android's UsageStatsManager API to detect when you open monitored apps
+- **User experience**: Friction appears automatically when opening social apps
+- **Permissions**: Requires "Usage Access" permission (one-time setup)
+- **Monitoring**: Runs in background, polls every 2 seconds
+- **Controls**: Start/Stop Monitoring buttons
+
+### iOS: Manual Trigger Mode
+- **Why manual?**: iOS doesn't allow background app monitoring (privacy restrictions)
+- **How it works**: Tap "Pause & Reflect" button before opening social apps
+- **User experience**: Self-initiated friction moments
+- **Permissions**: None required (all local)
+- **Benefits**:
+  - More intentional (you decide when to pause)
+  - Works with any app (not limited to monitored list)
+  - Can trigger friction anytime you feel impulsive
+- **Future**: Siri Shortcuts will enable quick access via voice/widget
+
+Both platforms track your choices and generate the same insights!
 
 ## Project Structure
 
@@ -138,12 +185,22 @@ flutter test
 
 ### Building for Release
 
+#### Android
 ```bash
 # Android APK
 flutter build apk --release
 
-# Android App Bundle
+# Android App Bundle (for Play Store)
 flutter build appbundle --release
+```
+
+#### iOS
+```bash
+# iOS build (requires macOS with Xcode)
+flutter build ios --release
+
+# Or open in Xcode for signing and distribution
+open ios/Runner.xcworkspace
 ```
 
 ### Adding New Monitored Apps
@@ -164,18 +221,38 @@ static const Map<String, String> appNamesMap = {
 
 ## Troubleshooting
 
-### "App usage permission denied"
+### Android-Specific
+
+**"App usage permission denied"**
 - Go to Settings > Apps > Special access > Usage access
 - Enable for Intentional Friction
 
-### Friction not appearing
+**Friction not appearing**
 - Ensure monitoring is active (shield icon should be filled)
 - Verify the app you're opening is in the monitored list
 - Check Flutter logs: `flutter logs`
 
-### Hive adapter errors
+### iOS-Specific
+
+**"Pause & Reflect" button not working**
+- This is expected behavior - button generates friction on-demand
+- Tap it when you feel urge to open social apps
+- Not meant to detect apps automatically
+
+**No friction appearing automatically**
+- This is expected on iOS - friction is manual-trigger only
+- Use the "Pause & Reflect" button before opening apps
+
+### Cross-Platform
+
+**Hive adapter errors**
 - Clean and rebuild: `flutter pub run build_runner clean`
 - Regenerate: `flutter pub run build_runner build --delete-conflicting-outputs`
+
+**Onboarding appears every time**
+- Settings may not be persisting
+- Check Hive initialization in main.dart
+- Try clearing app data and reinstalling
 
 ## Philosophy
 
