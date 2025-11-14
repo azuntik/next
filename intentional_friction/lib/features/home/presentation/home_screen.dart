@@ -16,11 +16,20 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _hasPermission = false;
   int _currentIndex = 0;
+  bool _isIOS = false;
 
   @override
   void initState() {
     super.initState();
     _checkPermissions();
+    _detectPlatform();
+  }
+
+  void _detectPlatform() {
+    final monitor = ref.read(usageMonitorServiceProvider);
+    setState(() {
+      _isIOS = monitor.isIOS;
+    });
   }
 
   Future<void> _checkPermissions() async {
@@ -81,6 +90,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final monitor = ref.read(usageMonitorServiceProvider);
     monitor.stopMonitoring();
     ref.read(isMonitoringProvider.notifier).state = false;
+  }
+
+  /// iOS-specific: Manual friction trigger
+  Future<void> _triggerManualFriction() async {
+    final engine = ref.read(frictionDecisionEngineProvider);
+    final storage = ref.read(storageServiceProvider);
+
+    // Generate friction moment with generic app (user will specify in future)
+    final moment = engine.generateFrictionMoment('manual_trigger');
+
+    // Save to storage
+    await storage.saveFrictionMoment(moment);
+
+    // Show friction screen
+    if (mounted) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => FrictionScreen(moment: moment),
+          fullscreenDialog: true,
+        ),
+      );
+
+      // Refresh stats
+      ref.invalidate(todayFrictionMomentsProvider);
+    }
   }
 
   @override
@@ -163,33 +197,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           const Spacer(),
 
-          // Control button
-          if (!_hasPermission)
-            ElevatedButton(
-              onPressed: _checkPermissions,
+          // iOS: Manual friction trigger
+          if (_isIOS) ...[
+            ElevatedButton.icon(
+              onPressed: _triggerManualFriction,
+              icon: const Icon(Icons.pause_circle_outline, size: 28),
+              label: const Text('Pause & Reflect'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text('Grant Permissions'),
-            )
-          else if (!isMonitoring)
-            ElevatedButton(
-              onPressed: _startMonitoring,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 18),
                 backgroundColor: const Color(AppConstants.primaryColorValue),
+                foregroundColor: Colors.white,
               ),
-              child: const Text('Start Monitoring'),
-            )
-          else
-            ElevatedButton(
-              onPressed: _stopMonitoring,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: Colors.red,
-              ),
-              child: const Text('Stop Monitoring'),
             ),
+            const SizedBox(height: 12),
+            Text(
+              'Tap this before opening social apps',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ]
+          // Android: Automatic monitoring
+          else ...[
+            if (!_hasPermission)
+              ElevatedButton(
+                onPressed: _checkPermissions,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text('Grant Permissions'),
+              )
+            else if (!isMonitoring)
+              ElevatedButton(
+                onPressed: _startMonitoring,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color(AppConstants.primaryColorValue),
+                ),
+                child: const Text('Start Monitoring'),
+              )
+            else
+              ElevatedButton(
+                onPressed: _stopMonitoring,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text('Stop Monitoring'),
+              ),
+          ],
         ],
       ),
     );
@@ -202,15 +260,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Column(
           children: [
             Icon(
-              isMonitoring ? Icons.shield : Icons.shield_outlined,
+              _isIOS ? Icons.touch_app : (isMonitoring ? Icons.shield : Icons.shield_outlined),
               size: 48,
-              color: isMonitoring
+              color: _isIOS
                   ? const Color(AppConstants.primaryColorValue)
-                  : Colors.grey,
+                  : (isMonitoring
+                      ? const Color(AppConstants.primaryColorValue)
+                      : Colors.grey),
             ),
             const SizedBox(height: 12),
             Text(
-              isMonitoring ? 'Monitoring Active' : 'Monitoring Inactive',
+              _isIOS
+                  ? 'Manual Mode (iOS)'
+                  : (isMonitoring ? 'Monitoring Active' : 'Monitoring Inactive'),
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -218,9 +280,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              isMonitoring
-                  ? 'Friction will appear when you open monitored apps'
-                  : 'Start monitoring to begin your mindful journey',
+              _isIOS
+                  ? 'Tap "Pause & Reflect" before opening social apps'
+                  : (isMonitoring
+                      ? 'Friction will appear when you open monitored apps'
+                      : 'Start monitoring to begin your mindful journey'),
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 14,
@@ -267,14 +331,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Row(
               children: [
                 Icon(
-                  Icons.info_outline,
+                  _isIOS ? Icons.phone_iphone : Icons.info_outline,
                   size: 20,
                   color: const Color(AppConstants.primaryColorValue),
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Phase 2 Features',
-                  style: TextStyle(
+                Text(
+                  _isIOS ? 'iOS Manual Mode' : 'Phase 2 Features',
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -283,11 +347,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              '• All 5 friction modes (mirror, question, trade-off, breath, alternative)\n'
-              '• Emotion tracking for deeper insights\n'
-              '• Adaptive friction based on your patterns\n'
-              '• Weekly insights and recommendations\n'
-              '• Customizable intensity settings',
+              _isIOS
+                  ? 'iOS doesn\'t allow background app monitoring. Instead:\n\n'
+                      '• Tap "Pause & Reflect" before opening social apps\n'
+                      '• Get a mindful friction moment\n'
+                      '• Choose to proceed or close the app\n'
+                      '• Track your patterns over time\n\n'
+                      'Future: Siri Shortcuts for quick access!'
+                  : '• All 5 friction modes (mirror, question, trade-off, breath, alternative)\n'
+                      '• Emotion tracking for deeper insights\n'
+                      '• Adaptive friction based on your patterns\n'
+                      '• Weekly insights and recommendations\n'
+                      '• Customizable intensity settings',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[700],
