@@ -37,6 +37,13 @@ dependencies:
   # UUID Generation
   uuid: ^4.2.2
 
+  # File Handling
+  path_provider: ^2.1.1
+  share_plus: ^7.2.1
+
+  # URL Launching (for email, web links)
+  url_launcher: ^6.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

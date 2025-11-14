@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../providers/friction_providers.dart';
 import '../../../core/utils/constants.dart';
+import '../../../core/services/data_export_service.dart';
 import '../../shortcuts_setup/presentation/shortcuts_setup_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -167,6 +169,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onTap: () => _showHowItWorks(context),
           ),
 
+          const SizedBox(height: 16),
+
+          // Feedback & Support Section
+          _buildSectionHeader(context, 'Feedback & Support'),
+
+          ListTile(
+            leading: const Icon(Icons.feedback_outlined, color: Color(AppConstants.primaryColorValue)),
+            title: const Text('Send Feedback'),
+            subtitle: const Text('Report bugs, request features, or share thoughts'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _showFeedbackOptions(context),
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.star_outline, color: Color(AppConstants.primaryColorValue)),
+            title: const Text('Rate This App'),
+            subtitle: const Text('Help others discover Intentional Friction'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _promptRating(context),
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.code, color: Color(AppConstants.primaryColorValue)),
+            title: const Text('GitHub Repository'),
+            subtitle: const Text('View source code and contribute'),
+            trailing: const Icon(Icons.open_in_new),
+            onTap: () => _openGitHub(),
+          ),
+
           const SizedBox(height: 32),
 
           // Footer
@@ -309,35 +340,98 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  void _exportData(BuildContext context, storage) {
-    final moments = storage.getAllFrictionMoments();
+  Future<void> _exportData(BuildContext context, storage) async {
+    final exportService = DataExportService(storage);
+    final stats = await exportService.getExportStats();
 
-    if (moments.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No data to export yet')),
-      );
+    if (stats.totalMoments == 0) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No data to export yet')),
+        );
+      }
       return;
     }
 
-    // In a real app, this would save to file
-    // For now, just show count
+    // Show export options dialog
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Export Data'),
-        content: Text(
-          'You have ${moments.length} friction moments.\n\n'
-          'In a production app, this would download a JSON file.\n\n'
-          'For now, this is a demo feature.',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Export ${stats.totalMoments} friction moments'),
+            const SizedBox(height: 8),
+            Text(
+              stats.dateRange,
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Estimated size: ${stats.estimatedFileSize}',
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            const Text('Choose format:', style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _performExport(context, exportService, 'csv');
+            },
+            child: const Text('CSV (Spreadsheet)'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _performExport(context, exportService, 'json');
+            },
+            child: const Text('JSON (Full Data)'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _performExport(BuildContext context, DataExportService exportService, String format) async {
+    try {
+      // Show loading
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Preparing export...')),
+        );
+      }
+
+      final file = format == 'json'
+          ? await exportService.exportAsJson()
+          : await exportService.exportAsCsv();
+
+      // Share the file
+      await exportService.shareExport(
+        file,
+        mimeType: format == 'json' ? 'application/json' : 'text/csv',
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Export successful! Opening share sheet...')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e')),
+        );
+      }
+    }
   }
 
   void _confirmDeleteData(BuildContext context, storage) {
@@ -447,6 +541,147 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  void _showFeedbackOptions(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Send Feedback'),
+        content: const Text(
+          'How would you like to share your feedback?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _sendEmail(context,
+                  subject: 'Intentional Friction - Bug Report');
+            },
+            child: const Text('Report Bug'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _sendEmail(context,
+                  subject: 'Intentional Friction - Feature Request');
+            },
+            child: const Text('Request Feature'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _sendEmail(context,
+                  subject: 'Intentional Friction - Feedback');
+            },
+            child: const Text('General Feedback'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _sendEmail(BuildContext context, {required String subject}) async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'feedback@intentionalfriction.app', // Replace with your email
+      queryParameters: {
+        'subject': subject,
+        'body': '\n\n---\nApp Version: 1.0.0\nPlatform: ${Platform.isAndroid ? "Android" : "iOS"}\n',
+      },
+    );
+
+    try {
+      if (await canLaunchUrl(emailUri)) {
+        await launchUrl(emailUri);
+      } else {
+        if (context.mounted) {
+          _showContactInfo(context);
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        _showContactInfo(context);
+      }
+    }
+  }
+
+  void _showContactInfo(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Contact Information'),
+        content: const SelectableText(
+          'Please email us at:\nfeedback@intentionalfriction.app\n\n'
+          'Or reach out on:\n'
+          '• GitHub: github.com/[username]/intentional-friction\n'
+          '• Twitter: @intentionalapp',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _promptRating(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rate Intentional Friction'),
+        content: const Text(
+          'Love the app? Your rating helps others discover mindful technology use!\n\n'
+          'Would you like to rate us on the app store?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Maybe Later'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _openAppStore();
+            },
+            child: const Text('Rate Now'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openAppStore() async {
+    // These URLs will need to be updated with actual app store links
+    final appStoreUrl = Platform.isAndroid
+        ? Uri.parse('https://play.google.com/store/apps/details?id=com.intentionalfriction.app')
+        : Uri.parse('https://apps.apple.com/app/intentional-friction/id[your-app-id]');
+
+    try {
+      if (await canLaunchUrl(appStoreUrl)) {
+        await launchUrl(appStoreUrl, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      // Silently fail - store not available yet
+    }
+  }
+
+  Future<void> _openGitHub() async {
+    final githubUrl = Uri.parse('https://github.com/[username]/intentional-friction');
+
+    try {
+      if (await canLaunchUrl(githubUrl)) {
+        await launchUrl(githubUrl, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      // Silently fail
+    }
   }
 
   String _capitalizeFirst(String text) {
