@@ -14,6 +14,7 @@ class ShortcutsSetupScreen extends StatefulWidget {
 class _ShortcutsSetupScreenState extends State<ShortcutsSetupScreen> {
   int _currentStep = 0;
   String _selectedApp = 'Instagram';
+  String? _setupMode; // 'quick' or 'manual'
 
   final List<String> _commonApps = [
     'Instagram',
@@ -25,6 +26,24 @@ class _ShortcutsSetupScreenState extends State<ShortcutsSetupScreen> {
     'Snapchat',
     'LinkedIn',
   ];
+
+  // Pre-made shortcut links (to be populated with real iCloud links)
+  final Map<String, String> _shortcutLinks = {
+    'Instagram': 'https://www.icloud.com/shortcuts/[instagram-id]', // Placeholder
+    'Facebook': 'https://www.icloud.com/shortcuts/[facebook-id]',
+    'Twitter (X)': 'https://www.icloud.com/shortcuts/[twitter-id]',
+    'TikTok': 'https://www.icloud.com/shortcuts/[tiktok-id]',
+    'Reddit': 'https://www.icloud.com/shortcuts/[reddit-id]',
+    'YouTube': 'https://www.icloud.com/shortcuts/[youtube-id]',
+    'Snapchat': 'https://www.icloud.com/shortcuts/[snapchat-id]',
+    'LinkedIn': 'https://www.icloud.com/shortcuts/[linkedin-id]',
+  };
+
+  int get _totalSteps {
+    if (_setupMode == null) return 4; // Intro + 3 steps
+    if (_setupMode == 'quick') return 3; // Intro + import + automation
+    return 4; // Intro + manual shortcut + automation + completion
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +57,7 @@ class _ShortcutsSetupScreenState extends State<ShortcutsSetupScreen> {
         children: [
           // Progress indicator
           LinearProgressIndicator(
-            value: (_currentStep + 1) / 4,
+            value: (_currentStep + 1) / _totalSteps,
             backgroundColor: Colors.grey[200],
             valueColor: const AlwaysStoppedAnimation<Color>(
               Color(AppConstants.primaryColorValue),
@@ -57,18 +76,444 @@ class _ShortcutsSetupScreenState extends State<ShortcutsSetupScreen> {
   }
 
   Widget _buildCurrentStep() {
-    switch (_currentStep) {
-      case 0:
-        return _buildIntroStep();
-      case 1:
-        return _buildSiriShortcutStep();
-      case 2:
-        return _buildAutomationStep();
-      case 3:
-        return _buildCompletionStep();
-      default:
-        return _buildIntroStep();
+    if (_setupMode == null) {
+      return _buildModeSelectionStep();
     }
+
+    if (_setupMode == 'quick') {
+      switch (_currentStep) {
+        case 0:
+          return _buildModeSelectionStep();
+        case 1:
+          return _buildQuickImportStep();
+        case 2:
+          return _buildCompletionStep();
+        default:
+          return _buildModeSelectionStep();
+      }
+    } else {
+      // Manual mode
+      switch (_currentStep) {
+        case 0:
+          return _buildModeSelectionStep();
+        case 1:
+          return _buildSiriShortcutStep();
+        case 2:
+          return _buildAutomationStep();
+        case 3:
+          return _buildCompletionStep();
+        default:
+          return _buildModeSelectionStep();
+      }
+    }
+  }
+
+  Widget _buildModeSelectionStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(
+          Icons.auto_awesome,
+          size: 64,
+          color: Color(AppConstants.primaryColorValue),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          'Choose Setup Method',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'How would you like to set up friction moments for $_selectedApp?',
+          style: TextStyle(fontSize: 16, height: 1.5),
+        ),
+        const SizedBox(height: 32),
+
+        // Quick Import Option (Recommended)
+        _buildSetupModeCard(
+          mode: 'quick',
+          icon: Icons.bolt,
+          title: 'Quick Import (Recommended)',
+          subtitle: 'Import pre-made shortcut with one tap',
+          duration: '2 minutes',
+          steps: '2 simple steps',
+          isRecommended: true,
+          badge: 'EASIEST',
+        ),
+        const SizedBox(height: 16),
+
+        // Manual Setup Option
+        _buildSetupModeCard(
+          mode: 'manual',
+          icon: Icons.construction,
+          title: 'Manual Setup',
+          subtitle: 'Create shortcut yourself step-by-step',
+          duration: '5 minutes',
+          steps: '8 detailed steps',
+          isRecommended: false,
+        ),
+
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.blue[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.blue[200]!),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.blue[700]),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Both methods work equally well! Quick Import is faster, '
+                  'but Manual Setup gives you more control.',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSetupModeCard({
+    required String mode,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required String duration,
+    required String steps,
+    bool isRecommended = false,
+    String? badge,
+  }) {
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _setupMode = mode;
+          _currentStep = 1; // Move to next step
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isRecommended
+                ? const Color(AppConstants.primaryColorValue)
+                : Colors.grey[300]!,
+            width: isRecommended ? 2 : 1,
+          ),
+          boxShadow: isRecommended
+              ? [
+                  BoxShadow(
+                    color: const Color(AppConstants.primaryColorValue)
+                        .withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 32,
+                  color: isRecommended
+                      ? const Color(AppConstants.primaryColorValue)
+                      : Colors.grey[700],
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: isRecommended
+                                  ? const Color(AppConstants.primaryColorValue)
+                                  : Colors.black,
+                            ),
+                          ),
+                          if (badge != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(AppConstants.primaryColorValue),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                badge,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 20,
+                  color: isRecommended
+                      ? const Color(AppConstants.primaryColorValue)
+                      : Colors.grey,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(Icons.schedule, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  duration,
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                ),
+                const SizedBox(width: 20),
+                Icon(Icons.list, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  steps,
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickImportStep() {
+    final shortcutLink = _shortcutLinks[_selectedApp] ?? '';
+    final isPlaceholder = shortcutLink.contains('[') && shortcutLink.contains(']');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Quick Import Shortcut',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Import the pre-made shortcut for $_selectedApp, then create the automation.',
+          style: const TextStyle(fontSize: 16),
+        ),
+        const SizedBox(height: 24),
+
+        // Step 1: Import Shortcut
+        _buildInstructionCard(
+          number: 1,
+          title: 'Import the Shortcut',
+          description: isPlaceholder
+              ? 'Pre-made shortcuts coming soon! Use manual setup for now.'
+              : 'Tap the button below to open the shortcut in the Shortcuts app',
+          icon: Icons.download,
+          child: isPlaceholder
+              ? Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange[200]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.construction, color: Colors.orange[700]),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Pre-made shortcuts are being created. Use Manual Setup for now.',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Open shortcut link (requires url_launcher package)
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'This will open the Shortcuts app to import the shortcut',
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.download),
+                  label: Text('Import $_selectedApp Shortcut'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    backgroundColor: const Color(AppConstants.primaryColorValue),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Step 2: Create Automation
+        _buildInstructionCard(
+          number: 2,
+          title: 'Create the Automation',
+          description: 'Now set up when the shortcut should run',
+          icon: Icons.auto_awesome,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSubStep('a', 'Open Shortcuts app → Automation tab'),
+              const SizedBox(height: 8),
+              _buildSubStep('b', 'Tap + → Create Personal Automation'),
+              const SizedBox(height: 8),
+              _buildSubStep('c', 'Choose "App" → Select $_selectedApp → "Is Opened"'),
+              const SizedBox(height: 8),
+              _buildSubStep('d', 'Search for "Check $_selectedApp" shortcut'),
+              const SizedBox(height: 8),
+              _buildSubStep(
+                'e',
+                'Turn OFF "Ask Before Running"',
+                highlighted: true,
+              ),
+              const SizedBox(height: 8),
+              _buildSubStep('f', 'Tap Done!'),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.green[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.green[300]!),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green[700]),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'That\'s it!',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Friction will now appear automatically when you open $_selectedApp. '
+                'Test it by opening the app!',
+                style: TextStyle(fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+
+        if (isPlaceholder) ...[
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () {
+              setState(() {
+                _setupMode = 'manual';
+                _currentStep = 1;
+              });
+            },
+            icon: const Icon(Icons.construction),
+            label: const Text('Switch to Manual Setup'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              backgroundColor: Colors.orange[700],
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSubStep(String letter, String text, {bool highlighted = false}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: highlighted
+                ? Colors.orange[700]
+                : Colors.grey[300],
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              letter,
+              style: TextStyle(
+                color: highlighted ? Colors.white : Colors.black87,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: highlighted ? FontWeight.bold : FontWeight.normal,
+              color: highlighted ? Colors.orange[900] : Colors.black87,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildIntroStep() {
@@ -680,6 +1125,26 @@ class _ShortcutsSetupScreenState extends State<ShortcutsSetupScreen> {
   }
 
   Widget _buildNavigationButtons() {
+    final maxStep = _totalSteps - 1;
+    final isLastStep = _currentStep >= maxStep;
+    final isFirstStep = _currentStep == 0;
+
+    // Don't show navigation on mode selection step (handled by cards)
+    if (_setupMode == null) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        child: ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            backgroundColor: Colors.grey[600],
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Cancel'),
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -694,12 +1159,18 @@ class _ShortcutsSetupScreenState extends State<ShortcutsSetupScreen> {
       ),
       child: Row(
         children: [
-          if (_currentStep > 0)
+          if (!isFirstStep)
             Expanded(
               child: OutlinedButton(
                 onPressed: () {
                   setState(() {
-                    _currentStep--;
+                    if (_currentStep == 1) {
+                      // Going back to mode selection - reset mode
+                      _setupMode = null;
+                      _currentStep = 0;
+                    } else {
+                      _currentStep--;
+                    }
                   });
                 },
                 style: OutlinedButton.styleFrom(
@@ -708,12 +1179,12 @@ class _ShortcutsSetupScreenState extends State<ShortcutsSetupScreen> {
                 child: const Text('Back'),
               ),
             ),
-          if (_currentStep > 0) const SizedBox(width: 12),
+          if (!isFirstStep) const SizedBox(width: 12),
           Expanded(
             flex: 2,
             child: ElevatedButton(
               onPressed: () {
-                if (_currentStep < 3) {
+                if (!isLastStep) {
                   setState(() {
                     _currentStep++;
                   });
@@ -726,7 +1197,7 @@ class _ShortcutsSetupScreenState extends State<ShortcutsSetupScreen> {
                 backgroundColor: const Color(AppConstants.primaryColorValue),
                 foregroundColor: Colors.white,
               ),
-              child: Text(_currentStep < 3 ? 'Next' : 'Done'),
+              child: Text(isLastStep ? 'Done' : 'Next'),
             ),
           ),
         ],

@@ -52,12 +52,14 @@ Intentional Friction helps you understand *why* you reach for your phone and mak
 2. **Option 1 - Manual**: Tap the "Pause & Reflect" button before opening social apps
 3. **Option 2 - Automatic** (Recommended): Set up iOS Shortcuts automation
    - Go to Settings > iOS Shortcuts Setup
-   - Follow the step-by-step guide (5 minutes per app)
+   - Choose Quick Import (2 min) or Manual Setup (5 min)
+   - **Quick Import**: One-tap shortcut download + simple automation
+   - **Manual Setup**: Step-by-step guide to create from scratch
    - Once set up, friction appears automatically when opening apps!
    - Use Siri: "Hey Siri, check Instagram" for quick access
 4. Your patterns are tracked over time
 
-**Note**: iOS doesn't allow background monitoring like Android, but iOS Shortcuts makes it nearly automatic! The setup guide walks you through creating automations for each app you want to monitor.
+**Note**: iOS doesn't allow background monitoring like Android, but iOS Shortcuts makes it nearly automatic! The setup guide offers pre-made shortcuts you can import with one tap, or detailed instructions to create them manually.
 
 ## How It Works
 
