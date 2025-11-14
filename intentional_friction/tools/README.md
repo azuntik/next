@@ -1,0 +1,202 @@
+# iOS Shortcuts Generator
+
+This directory contains tools for generating pre-made iOS shortcuts for the Intentional Friction app.
+
+## Quick Start
+
+### Generate All Shortcuts
+
+```bash
+cd tools
+python3 generate_shortcuts.py
+```
+
+This will create 8 `.shortcut` files in `output/ios_shortcuts/` that are ready to transfer to iOS devices.
+
+## What Gets Generated
+
+The script creates shortcuts for these apps:
+- Instagram
+- Facebook
+- Twitter/X
+- TikTok
+- Reddit
+- YouTube
+- Snapchat
+- LinkedIn
+
+Each shortcut:
+- Opens the Intentional Friction app with a specific app parameter
+- Has a custom color and icon
+- Is ready to import into iOS Shortcuts app
+- Works with Siri voice commands
+
+## How to Use Generated Shortcuts
+
+### Step 1: Transfer to iOS Device
+
+Choose one method:
+
+**Option A: AirDrop** (Easiest)
+```
+1. Select all .shortcut files from output/ios_shortcuts/
+2. AirDrop to your iOS device
+3. Tap each file to import
+```
+
+**Option B: iCloud Drive**
+```
+1. Upload .shortcut files to iCloud Drive
+2. Open Files app on iOS
+3. Tap each file to import
+```
+
+**Option C: Email/Messages**
+```
+1. Email yourself the files
+2. Open on iOS device
+3. Tap attachments to import
+```
+
+### Step 2: Import Shortcuts
+
+On your iOS device:
+1. Tap a `.shortcut` file
+2. iOS opens Shortcuts app
+3. Tap "Add Shortcut"
+4. Repeat for each app you want
+
+### Step 3: Create Automations
+
+For each imported shortcut:
+1. Open Shortcuts app → Automation tab
+2. Tap + → Create Personal Automation
+3. Choose "App"
+4. Select target app (Instagram, Facebook, etc.)
+5. Choose "Is Opened"
+6. Tap Next
+7. Search for your shortcut ("Check Instagram")
+8. **CRITICAL**: Turn OFF "Ask Before Running"
+9. Tap Done
+
+Now friction appears automatically when you open that app!
+
+## Creating iCloud Share Links
+
+To get shareable iCloud links for the app:
+
+1. Import a shortcut to your iOS device
+2. Open Shortcuts app
+3. Long-press the shortcut
+4. Tap "Share"
+5. Enable "Share as iCloud Link"
+6. Copy the link
+7. Update `lib/features/shortcuts_setup/presentation/shortcuts_setup_screen.dart`:
+
+```dart
+final Map<String, String> _shortcutLinks = {
+  'Instagram': 'https://www.icloud.com/shortcuts/ACTUAL_LINK_ID',
+  // Replace with real link
+};
+```
+
+Once you add real iCloud links, users can import shortcuts with a single tap instead of file transfers!
+
+## Script Details
+
+### Technology
+
+- **Python 3.6+** (stdlib only, no dependencies)
+- **plistlib**: Generates iOS property list files
+- **UUID**: Creates unique identifiers for shortcuts
+
+### Generated File Structure
+
+Each `.shortcut` file is a binary plist containing:
+- Workflow actions (Open URL)
+- App parameters (intentionalfriction://trigger?app=AppName)
+- Display metadata (name, icon, colors)
+- iOS version compatibility info
+
+### Customization
+
+Edit `generate_shortcuts.py` to:
+- Add new apps (update `APPS` dictionary)
+- Change colors/icons
+- Modify URL schemes
+- Add custom actions
+
+Example:
+```python
+APPS = {
+    'NewApp': {
+        'name': 'Check NewApp',
+        'color': 4294901760,  # Red
+        'icon': {
+            'StartColor': 4294901760,
+            'EndColor': 4294901760,
+            'GlyphNumber': 59511,
+        }
+    },
+}
+```
+
+## Troubleshooting
+
+**"No module named 'plistlib'"**
+- plistlib is part of Python standard library
+- Make sure you're using Python 3.6+
+- Try: `python3 --version`
+
+**Files won't import on iOS**
+- Ensure files have .shortcut extension
+- Must open on iOS device (not Mac)
+- Try different transfer method
+
+**Generated files are empty**
+- Check output directory: `ls -la output/ios_shortcuts/`
+- Re-run script: `python3 generate_shortcuts.py`
+
+**Want to regenerate**
+```bash
+rm -rf output/ios_shortcuts
+python3 generate_shortcuts.py
+```
+
+## Architecture
+
+```
+tools/
+├── generate_shortcuts.py      # Main generator script
+└── output/
+    └── ios_shortcuts/
+        ├── Check_Instagram.shortcut
+        ├── Check_Facebook.shortcut
+        ├── Check_Twitter.shortcut
+        ├── Check_TikTok.shortcut
+        ├── Check_Reddit.shortcut
+        ├── Check_YouTube.shortcut
+        ├── Check_Snapchat.shortcut
+        ├── Check_LinkedIn.shortcut
+        └── README.md           # User-facing instructions
+```
+
+## Next Steps
+
+1. ✅ Generate shortcuts (`python3 generate_shortcuts.py`)
+2. 📱 Transfer to iOS device (AirDrop/iCloud/Email)
+3. ➕ Import into Shortcuts app
+4. 🤖 Create automations for each app
+5. 🔗 (Optional) Create iCloud share links
+6. 💎 (Optional) Update app code with links
+
+## Additional Resources
+
+- [iOS Shortcuts User Guide](https://support.apple.com/guide/shortcuts/welcome/ios)
+- [URL Schemes Documentation](https://developer.apple.com/documentation/xcode/defining-a-custom-url-scheme-for-your-app)
+- [Property List Format](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/PropertyLists/Introduction/Introduction.html)
+
+---
+
+**Generated by**: Intentional Friction Tools
+**Last updated**: 2025-11
