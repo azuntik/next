@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/friction_providers.dart';
 import '../../../core/utils/constants.dart';
+import '../../shortcuts_setup/presentation/shortcuts_setup_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -73,6 +75,52 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Divider(),
 
           const SizedBox(height: 16),
+
+          // iOS Shortcuts Section (iOS only)
+          if (Platform.isIOS) ...[
+            _buildSectionHeader(context, 'iOS Shortcuts'),
+
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: Colors.blue[700], size: 20),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Make friction nearly automatic with iOS Shortcuts!',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.bolt, color: Color(AppConstants.primaryColorValue)),
+              title: const Text('Setup Shortcuts Automation'),
+              subtitle: const Text('Step-by-step guide for automatic friction'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ShortcutsSetupScreen(),
+                  ),
+                );
+              },
+            ),
+
+            const Divider(),
+
+            const SizedBox(height: 16),
+          ],
 
           // Data & Privacy Section
           _buildSectionHeader(context, 'Data & Privacy'),

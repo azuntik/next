@@ -47,14 +47,17 @@ Intentional Friction helps you understand *why* you reach for your phone and mak
 5. Try opening Instagram, Twitter, or any monitored app
 6. Experience your first friction moment automatically!
 
-#### iOS (Manual Trigger Mode)
+#### iOS (Manual Trigger or Shortcuts Automation)
 1. Launch the app and complete the onboarding
-2. Tap the "Pause & Reflect" button before opening social apps
-3. Experience a friction moment to check your intentions
-4. Choose to proceed or close the app
-5. Your patterns are tracked over time
+2. **Option 1 - Manual**: Tap the "Pause & Reflect" button before opening social apps
+3. **Option 2 - Automatic** (Recommended): Set up iOS Shortcuts automation
+   - Go to Settings > iOS Shortcuts Setup
+   - Follow the step-by-step guide (5 minutes per app)
+   - Once set up, friction appears automatically when opening apps!
+   - Use Siri: "Hey Siri, check Instagram" for quick access
+4. Your patterns are tracked over time
 
-**Note**: iOS doesn't allow background app monitoring. Instead, you manually trigger friction moments when you feel the urge to open social apps. Future updates will add Siri Shortcuts for quick access.
+**Note**: iOS doesn't allow background monitoring like Android, but iOS Shortcuts makes it nearly automatic! The setup guide walks you through creating automations for each app you want to monitor.
 
 ## How It Works
 
@@ -100,6 +103,9 @@ Track your mindfulness over time
 
 - ✅ iOS support (manual trigger mode)
 - ✅ Android support (automatic monitoring)
+- ✅ iOS Shortcuts automation (App Intents + URL schemes)
+- ✅ Comprehensive setup guide for iOS automations
+- ✅ Siri voice commands support
 - ✅ 8-page interactive onboarding
 - ✅ Haptic feedback system
 - ✅ Material Design 3 theming
@@ -108,7 +114,7 @@ Track your mindfulness over time
 
 ### Future Enhancements
 
-- Siri Shortcuts integration (iOS)
+- iOS widgets for quick friction access
 - Advanced animations (Rive/Lottie)
 - Sound design
 - Data export/import
@@ -138,16 +144,24 @@ You can customize this list in the code at `lib/core/utils/constants.dart`.
 - **Monitoring**: Runs in background, polls every 2 seconds
 - **Controls**: Start/Stop Monitoring buttons
 
-### iOS: Manual Trigger Mode
-- **Why manual?**: iOS doesn't allow background app monitoring (privacy restrictions)
-- **How it works**: Tap "Pause & Reflect" button before opening social apps
-- **User experience**: Self-initiated friction moments
+### iOS: Manual Trigger + Shortcuts Automation
+- **Why not automatic?**: iOS doesn't allow background app monitoring (privacy restrictions)
+- **Manual mode**: Tap "Pause & Reflect" button before opening social apps
+- **Shortcuts mode** (Recommended):
+  - Set up iOS Shortcuts automations (one-time, 5 min per app)
+  - Friction appears automatically when opening apps
+  - Use Siri commands: "Hey Siri, check Instagram"
+  - Add shortcuts to home screen widgets
+  - Create personal automations in Shortcuts app
+- **User experience**: Nearly automatic with Shortcuts, or self-initiated with button
 - **Permissions**: None required (all local)
 - **Benefits**:
-  - More intentional (you decide when to pause)
+  - Shortcuts make it nearly automatic after setup
   - Works with any app (not limited to monitored list)
-  - Can trigger friction anytime you feel impulsive
-- **Future**: Siri Shortcuts will enable quick access via voice/widget
+  - Voice control via Siri
+  - Widget support for quick access
+  - More intentional (you set it up consciously)
+- **Setup guide**: Built-in step-by-step guide in Settings > iOS Shortcuts
 
 Both platforms track your choices and generate the same insights!
 
@@ -237,11 +251,24 @@ static const Map<String, String> appNamesMap = {
 **"Pause & Reflect" button not working**
 - This is expected behavior - button generates friction on-demand
 - Tap it when you feel urge to open social apps
-- Not meant to detect apps automatically
+- Or set up iOS Shortcuts for automatic friction
 
-**No friction appearing automatically**
-- This is expected on iOS - friction is manual-trigger only
-- Use the "Pause & Reflect" button before opening apps
+**Want automatic friction on iOS?**
+- Go to Settings > iOS Shortcuts Setup
+- Follow the step-by-step guide to create automations
+- Takes 5 minutes per app, works forever
+- Friction will appear automatically when opening apps
+
+**Shortcuts not triggering friction**
+- Make sure you disabled "Ask Before Running" in automation settings
+- Check that the URL scheme is correct in your shortcut
+- Verify the app is open when the automation runs
+- Try saying "Hey Siri, check [app name]" to test
+
+**Siri commands not working**
+- Ensure you've created the shortcut first
+- The shortcut must use the URL scheme from the setup guide
+- Try renaming your shortcut to match what you say to Siri
 
 ### Cross-Platform
 

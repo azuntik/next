@@ -304,18 +304,34 @@ The app is now **production-ready** for initial Android launch:
 - Status card shows "Manual Mode (iOS)"
 - Info card explains iOS manual approach
 
-**Future Enhancement**:
-- Siri Shortcuts integration for voice/widget access
-- "Hey Siri, pause and reflect" → friction moment
+**iOS Shortcuts Integration** (Implemented):
+- App Intents framework for iOS 16+ (`FrictionIntent.swift`)
+- URL scheme handler (`intentionalfriction://trigger`)
+- Method channel for Flutter-iOS communication (`ShortcutsService`)
+- AppDelegate.swift handles both App Intents and URL schemes
+- Comprehensive 4-step setup guide screen:
+  - Introduction to automation benefits
+  - Siri Shortcut creation with copy-paste URL
+  - iOS automation setup walkthrough
+  - Testing and multi-app setup
+- Settings integration with prominent call-to-action
+- Siri voice commands: "Hey Siri, check Instagram"
+- Personal automations: friction appears when opening apps
+- Per-app customization with unique URL schemes
 
 **User Experience**:
-- Android: Automatic friction when opening apps
-- iOS: Self-initiated friction before opening apps
+- Android: Automatic friction when opening apps (background monitoring)
+- iOS Option 1: Manual "Pause & Reflect" button
+- iOS Option 2: Nearly automatic via Shortcuts (recommended)
+  - One-time 5-minute setup per app
+  - Works via Siri, widgets, or automations
+  - Friction appears automatically when opening apps
 - Both: Same friction modes, emotion tracking, insights
 
 ---
 
 *Phase 3 completed: November 2025*
 *iOS support added: November 2025*
+*iOS Shortcuts added: November 2025*
 *Ready for: Beta testing on Android and iOS*
-*Status: Production-ready for both platforms*
+*Status: Production-ready for both platforms with automation*

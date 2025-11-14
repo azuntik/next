@@ -350,10 +350,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _isIOS
                   ? 'iOS doesn\'t allow background app monitoring. Instead:\n\n'
                       '• Tap "Pause & Reflect" before opening social apps\n'
-                      '• Get a mindful friction moment\n'
-                      '• Choose to proceed or close the app\n'
+                      '• Or set up iOS Shortcuts for automatic friction!\n'
+                      '• Use Siri: "Hey Siri, check Instagram"\n'
                       '• Track your patterns over time\n\n'
-                      'Future: Siri Shortcuts for quick access!'
+                      'Go to Settings > iOS Shortcuts for step-by-step setup!'
                   : '• All 5 friction modes (mirror, question, trade-off, breath, alternative)\n'
                       '• Emotion tracking for deeper insights\n'
                       '• Adaptive friction based on your patterns\n'
