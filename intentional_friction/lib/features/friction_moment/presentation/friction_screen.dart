@@ -25,6 +25,18 @@ class _FrictionScreenState extends ConsumerState<FrictionScreen>
 
   bool _canDismiss = false;
   late DateTime _startTime;
+  String? _selectedEmotion;
+  bool _showEmotionSelection = false;
+
+  // Common emotions for tracking
+  final List<Map<String, dynamic>> _emotions = [
+    {'label': 'Bored', 'icon': Icons.sentiment_neutral},
+    {'label': 'Anxious', 'icon': Icons.sentiment_very_dissatisfied},
+    {'label': 'Curious', 'icon': Icons.psychology},
+    {'label': 'Avoiding', 'icon': Icons.run_circle_outlined},
+    {'label': 'Lonely', 'icon': Icons.person_outline},
+    {'label': 'Tired', 'icon': Icons.bedtime},
+  ];
 
   @override
   void initState() {
@@ -65,10 +77,19 @@ class _FrictionScreenState extends ConsumerState<FrictionScreen>
   }
 
   void _handleChoice(UserChoice choice) async {
+    // Phase 2: Ask for emotion before final choice
+    if (!_showEmotionSelection && widget.moment.mode == FrictionMode.question) {
+      setState(() {
+        _showEmotionSelection = true;
+      });
+      return;
+    }
+
     final duration = DateTime.now().difference(_startTime);
 
     final updatedMoment = widget.moment.copyWith(
       choice: choice,
+      emotionalState: _selectedEmotion,
       displayDurationMs: duration.inMilliseconds,
     );
 
@@ -78,6 +99,12 @@ class _FrictionScreenState extends ConsumerState<FrictionScreen>
     if (mounted) {
       Navigator.of(context).pop(choice);
     }
+  }
+
+  void _selectEmotion(String emotion) {
+    setState(() {
+      _selectedEmotion = emotion;
+    });
   }
 
   @override
@@ -122,8 +149,35 @@ class _FrictionScreenState extends ConsumerState<FrictionScreen>
 
                     const Spacer(),
 
+                    // Emotion selection (Phase 2)
+                    if (_canDismiss && _showEmotionSelection) ...[
+                      Text(
+                        'How are you feeling?',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildEmotionGrid(),
+                      const SizedBox(height: 24),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedEmotion = null;
+                            _showEmotionSelection = false;
+                          });
+                        },
+                        child: Text(
+                          'Skip',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                    ]
                     // Action buttons
-                    if (_canDismiss) ...[
+                    else if (_canDismiss) ...[
                       _buildActionButton(
                         label: 'Proceed Anyway',
                         onPressed: () => _handleChoice(UserChoice.proceeded),
@@ -238,6 +292,67 @@ class _FrictionScreenState extends ConsumerState<FrictionScreen>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildEmotionGrid() {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      alignment: WrapAlignment.center,
+      children: _emotions.map((emotion) {
+        final isSelected = _selectedEmotion == emotion['label'];
+        return InkWell(
+          onTap: () {
+            _selectEmotion(emotion['label'] as String);
+            // Auto-proceed after selecting emotion
+            Future.delayed(const Duration(milliseconds: 300), () {
+              if (mounted) {
+                setState(() {
+                  _showEmotionSelection = false;
+                });
+              }
+            });
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? const Color(AppConstants.primaryColorValue).withOpacity(0.3)
+                  : Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected
+                    ? const Color(AppConstants.primaryColorValue)
+                    : Colors.white24,
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  emotion['icon'] as IconData,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  emotion['label'] as String,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

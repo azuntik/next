@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/friction_providers.dart';
 import '../../../core/utils/constants.dart';
 import '../../friction_moment/presentation/friction_screen.dart';
+import '../../insights/presentation/insights_screen.dart';
+import '../../settings/presentation/settings_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -13,6 +15,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _hasPermission = false;
+  int _currentIndex = 0;
 
   @override
   void initState() {
@@ -86,71 +89,108 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isMonitoring = ref.watch(isMonitoringProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Intentional Friction'),
-        centerTitle: true,
+      appBar: _currentIndex != 1 && _currentIndex != 2
+          ? AppBar(
+              title: const Text('Intentional Friction'),
+              centerTitle: true,
+            )
+          : null,
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          _buildDashboardTab(stats, isMonitoring),
+          const InsightsScreen(),
+          const SettingsScreen(),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Status card
-            _buildStatusCard(isMonitoring),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() => _currentIndex = index);
+        },
+        selectedItemColor: const Color(AppConstants.primaryColorValue),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.insights),
+            label: 'Insights',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
+      ),
+    );
+  }
 
-            const SizedBox(height: 32),
+  Widget _buildDashboardTab(
+    Map<String, dynamic> stats,
+    bool isMonitoring,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Status card
+          _buildStatusCard(isMonitoring),
 
-            // Stats
-            Text(
-              'Today\'s Choices',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 16),
+          const SizedBox(height: 32),
 
-            _buildStatRow('Friction Moments', stats['total'].toString()),
-            _buildStatRow('Proceeded', stats['proceeded'].toString()),
-            _buildStatRow('Chose to Close', stats['closed'].toString()),
-            _buildStatRow(
-              'Mindfulness Rate',
-              '${stats['mindfulnessRate']}%',
-            ),
+          // Stats
+          Text(
+            'Today\'s Choices',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 16),
 
-            const SizedBox(height: 32),
+          _buildStatRow('Friction Moments', stats['total'].toString()),
+          _buildStatRow('Proceeded', stats['proceeded'].toString()),
+          _buildStatRow('Chose to Close', stats['closed'].toString()),
+          _buildStatRow(
+            'Mindfulness Rate',
+            '${stats['mindfulnessRate']}%',
+          ),
 
-            // Info card
-            _buildInfoCard(),
+          const SizedBox(height: 32),
 
-            const Spacer(),
+          // Info card
+          _buildInfoCard(),
 
-            // Control button
-            if (!_hasPermission)
-              ElevatedButton(
-                onPressed: _checkPermissions,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text('Grant Permissions'),
-              )
-            else if (!isMonitoring)
-              ElevatedButton(
-                onPressed: _startMonitoring,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: const Color(AppConstants.primaryColorValue),
-                ),
-                child: const Text('Start Monitoring'),
-              )
-            else
-              ElevatedButton(
-                onPressed: _stopMonitoring,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.red,
-                ),
-                child: const Text('Stop Monitoring'),
+          const Spacer(),
+
+          // Control button
+          if (!_hasPermission)
+            ElevatedButton(
+              onPressed: _checkPermissions,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-          ],
-        ),
+              child: const Text('Grant Permissions'),
+            )
+          else if (!isMonitoring)
+            ElevatedButton(
+              onPressed: _startMonitoring,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: const Color(AppConstants.primaryColorValue),
+              ),
+              child: const Text('Start Monitoring'),
+            )
+          else
+            ElevatedButton(
+              onPressed: _stopMonitoring,
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: Colors.red,
+              ),
+              child: const Text('Stop Monitoring'),
+            ),
+        ],
       ),
     );
   }
@@ -233,7 +273,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const SizedBox(width: 8),
                 const Text(
-                  'How It Works',
+                  'Phase 2 Features',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -243,9 +283,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'When you try to open social media or other monitored apps, '
-              'you\'ll see a pause screen asking you to reflect on your intention. '
-              'This helps shift from autopilot to conscious choice.',
+              '• All 5 friction modes (mirror, question, trade-off, breath, alternative)\n'
+              '• Emotion tracking for deeper insights\n'
+              '• Adaptive friction based on your patterns\n'
+              '• Weekly insights and recommendations\n'
+              '• Customizable intensity settings',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[700],
