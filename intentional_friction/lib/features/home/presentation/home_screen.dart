@@ -1,0 +1,260 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../providers/friction_providers.dart';
+import '../../../core/utils/constants.dart';
+import '../../friction_moment/presentation/friction_screen.dart';
+
+class HomeScreen extends ConsumerStatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _hasPermission = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPermissions();
+  }
+
+  Future<void> _checkPermissions() async {
+    final monitor = ref.read(usageMonitorServiceProvider);
+    final hasPermission = await monitor.requestPermissions();
+
+    if (mounted) {
+      setState(() {
+        _hasPermission = hasPermission;
+      });
+    }
+  }
+
+  Future<void> _startMonitoring() async {
+    final monitor = ref.read(usageMonitorServiceProvider);
+    final engine = ref.read(frictionDecisionEngineProvider);
+    final storage = ref.read(storageServiceProvider);
+
+    try {
+      await monitor.startMonitoring();
+
+      // Listen for app launches
+      monitor.appLaunchStream.listen((appPackage) async {
+        // Decide if we should show friction
+        if (engine.shouldShowFriction(appPackage)) {
+          // Generate friction moment
+          final moment = engine.generateFrictionMoment(appPackage);
+
+          // Save to storage
+          await storage.saveFrictionMoment(moment);
+
+          // Show friction screen
+          if (mounted) {
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => FrictionScreen(moment: moment),
+                fullscreenDialog: true,
+              ),
+            );
+
+            // Refresh stats after friction screen closes
+            ref.invalidate(todayFrictionMomentsProvider);
+          }
+        }
+      });
+
+      ref.read(isMonitoringProvider.notifier).state = true;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  void _stopMonitoring() {
+    final monitor = ref.read(usageMonitorServiceProvider);
+    monitor.stopMonitoring();
+    ref.read(isMonitoringProvider.notifier).state = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final stats = ref.watch(todayStatsProvider);
+    final isMonitoring = ref.watch(isMonitoringProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Intentional Friction'),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Status card
+            _buildStatusCard(isMonitoring),
+
+            const SizedBox(height: 32),
+
+            // Stats
+            Text(
+              'Today\'s Choices',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 16),
+
+            _buildStatRow('Friction Moments', stats['total'].toString()),
+            _buildStatRow('Proceeded', stats['proceeded'].toString()),
+            _buildStatRow('Chose to Close', stats['closed'].toString()),
+            _buildStatRow(
+              'Mindfulness Rate',
+              '${stats['mindfulnessRate']}%',
+            ),
+
+            const SizedBox(height: 32),
+
+            // Info card
+            _buildInfoCard(),
+
+            const Spacer(),
+
+            // Control button
+            if (!_hasPermission)
+              ElevatedButton(
+                onPressed: _checkPermissions,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text('Grant Permissions'),
+              )
+            else if (!isMonitoring)
+              ElevatedButton(
+                onPressed: _startMonitoring,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color(AppConstants.primaryColorValue),
+                ),
+                child: const Text('Start Monitoring'),
+              )
+            else
+              ElevatedButton(
+                onPressed: _stopMonitoring,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text('Stop Monitoring'),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusCard(bool isMonitoring) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            Icon(
+              isMonitoring ? Icons.shield : Icons.shield_outlined,
+              size: 48,
+              color: isMonitoring
+                  ? const Color(AppConstants.primaryColorValue)
+                  : Colors.grey,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isMonitoring ? 'Monitoring Active' : 'Monitoring Inactive',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isMonitoring
+                  ? 'Friction will appear when you open monitored apps'
+                  : 'Start monitoring to begin your mindful journey',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(AppConstants.primaryColorValue),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Card(
+      color: const Color(AppConstants.primaryColorValue).withOpacity(0.1),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 20,
+                  color: const Color(AppConstants.primaryColorValue),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'How It Works',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'When you try to open social media or other monitored apps, '
+              'you\'ll see a pause screen asking you to reflect on your intention. '
+              'This helps shift from autopilot to conscious choice.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[700],
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
